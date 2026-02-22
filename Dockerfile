@@ -1,20 +1,15 @@
-FROM node:20-alpine
+FROM node:lts-alpine3.22
 
-WORKDIR /app
+RUN mkdir -p /opt/app
 
-# Копируем файлы манифестов
-COPY package*.json ./
+WORKDIR /opt/app
 
-# Устанавливаем зависимости
-RUN npm ci --only=production
+COPY package.json  .
 
-# Копируем исходный код
+RUN npm install
+
 COPY . .
 
-# Создаем директорию для БД (K8s будет монтировать сюда PVC)
-RUN mkdir -p /app/data
-
-ENV PORT=3000
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD [ "npm", "start"]
