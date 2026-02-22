@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Database files
+*.db
+focusflow.db
+
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+
+# Package lock (optional, remove if you want to track it)
+package-lock.json
