@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: focusflow
-        image: ghcr.io/u1dm/focusflow:latest
+        image: mrforust/focusflow:latest
         ports:
         - containerPort: 3000
         volumeMounts:
@@ -27,18 +27,23 @@ spec:
           claimName: focusflow-data-pvc
 
 ---
-#ingress
+# ingress
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: focusflow-ingress
+  annotations:
+    # ГЛАВНАЯ СТРОКА: связываем с нашим Issuer
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Заставляем Traefik делать редирект на HTTPS (если настроен entrypoint)
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
         - focusflow.chernuha.space
-
-      secretName: focusflow-tls-secret
+      secretName: focusflow-tls-secret # Сюда прилетит готовый сертификат
   rules:
     - host: focusflow.chernuha.space
       http:
@@ -50,7 +55,6 @@ spec:
                 name: focusflow
                 port:
                   number: 3000
-
 ---
 #pvc
 apiVersion: v1
