@@ -2,7 +2,12 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcrypt');
 
-const dbPath = path.join(__dirname, '..', 'focusflow.db');
+// Используем путь в папке /app/data/ если запущены в Docker/K8s
+const isProduction = process.env.NODE_ENV === 'production';
+const dbPath = isProduction 
+    ? path.join('/app', 'data', 'focusflow.db') 
+    : path.join(__dirname, '..', 'focusflow.db');
+
 const db = new sqlite3.Database(dbPath);
 
 // Initialize database tables

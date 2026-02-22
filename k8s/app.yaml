@@ -1,0 +1,79 @@
+#deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: focusflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: focusflow
+  template:
+    metadata:
+      labels:
+        app: focusflow
+    spec:
+      containers:
+      - name: focusflow
+        image: ghcr.io/u1dm/focusflow:latest
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: focusflow-data-pvc
+
+---
+#ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: focusflow-ingress
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - focusflow.chernuha.space
+
+      secretName: focusflow-tls-secret
+  rules:
+    - host: focusflow.chernuha.space
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: focusflow
+                port:
+                  number: 3000
+
+---
+#pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: focusflow-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+#service
+apiVersion: v1
+kind: Service
+metadata:
+  name: focusflow
+spec:
+  selector:
+    app: focusflow
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
