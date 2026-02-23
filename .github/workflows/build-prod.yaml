@@ -30,6 +30,8 @@ jobs:
       #     docker push ghcr.io/${{ github.repository_owner }}/focusflow:latest
 
   deploy:
+    needs: build
+
     runs-on: deploy-server
     steps:
       - uses: actions/checkout@v3
