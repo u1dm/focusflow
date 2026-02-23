@@ -1,5 +1,8 @@
+## Node
 # Dependencies
 node_modules/
+
+package-lock.json
 
 # Database files
 *.db
@@ -29,5 +32,3 @@ desktop.ini
 dist/
 build/
 
-# Package lock (optional, remove if you want to track it)
-package-lock.json

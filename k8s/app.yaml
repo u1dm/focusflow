@@ -14,18 +14,18 @@ spec:
         app: focusflow
     spec:
       containers:
-      - name: focusflow
-        image: mrforust/focusflow:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 3000
-        volumeMounts:
-        - name: data-volume
-          mountPath: /app/data
+        - name: focusflow
+          image: mrforust/focusflow:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
       volumes:
-      - name: data-volume
-        persistentVolumeClaim:
-          claimName: focusflow-data-pvc
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: focusflow-data-pvc
 
 ---
 # ingress
@@ -34,9 +34,8 @@ kind: Ingress
 metadata:
   name: focusflow-ingress
   annotations:
-    # ГЛАВНАЯ СТРОКА: связываем с нашим Issuer
+    # Issuer integration
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # Заставляем Traefik делать редирект на HTTPS (если настроен entrypoint)
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
@@ -44,7 +43,7 @@ spec:
   tls:
     - hosts:
         - focusflow.chernuha.space
-      secretName: focusflow-tls-secret # Сюда прилетит готовый сертификат
+      secretName: focusflow-tls-secret # Cert secret
   rules:
     - host: focusflow.chernuha.space
       http:
