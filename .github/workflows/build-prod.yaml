@@ -28,3 +28,11 @@ jobs:
       #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       #     docker tag focusflow:latest ghcr.io/${{ github.repository_owner }}/focusflow:latest
       #     docker push ghcr.io/${{ github.repository_owner }}/focusflow:latest
+
+  deploy:
+    runs-on: deploy-server
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update app on kubernetes server (Rollout pods)
+        run: |
+          kubectl rollout restart deployment focusflow 
