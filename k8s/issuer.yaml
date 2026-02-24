@@ -4,13 +4,11 @@ metadata:
   name: letsencrypt-prod
 spec:
   acme:
-    # Официальный сервер Let's Encrypt
     server: https://acme-v02.api.letsencrypt.org/directory
-    # Укажи свою почту, туда придет ахтунг, если автопродление сломается
-    email: vanyavana2010@gmail.com 
+    email: vanyavana2010@gmail.com
     privateKeySecretRef:
       name: letsencrypt-prod-key
     solvers:
-    - http01:
-        ingress:
-          class: traefik # Указываем, что используем Traefik
+      - http01:
+          ingress:
+            class: traefik
