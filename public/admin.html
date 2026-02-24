@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --card-radius: 16px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.1), transparent 25%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism utility classes */
+        .glass {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* App Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Login Screen */
+        #login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .login-card {
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .login-card h1 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #login-error {
+            color: var(--danger);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        /* Dashboard Screen */
+        #dashboard-screen {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            width: auto;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            box-shadow: none;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Tables */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr {
+            transition: background 0.2s;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge.work { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .badge.break { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge.running { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge.paused { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge.idle { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="glass login-card">
+            <h1>FocusFlow Admin</h1>
+            <p>Access the control dashboard</p>
+            <form id="login-form">
+                <input type="password" id="admin-password" placeholder="Admin Password" required autocomplete="current-password">
+                <button type="submit">Access Dashboard</button>
+                <div id="login-error">Доступ запрещен. Неверный пароль.</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="container">
+        <header>
+            <h1>FocusFlow Admin Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="glass stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="stat-users">-</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-label">Total Focus Time</div>
+                <div class="stat-value" id="stat-time">-<span style="font-size: 0.5em; color: var(--text-secondary); padding-left: 5px;">hrs</span></div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-label">Pomodoros Completed</div>
+                <div class="stat-value" id="stat-pomodoros">-</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-label">Active Rooms</div>
+                <div class="stat-value" id="stat-rooms" style="color: var(--primary-color)">-</div>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <div class="glass panel">
+                <h2>👥 User Leaderboard</h2>
+                <div id="users-table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading users...
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass panel">
+                <h2>📡 Active Rooms</h2>
+                <div id="rooms-table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading rooms...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = '';
+        let refreshInterval = null;
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('admin-password').value;
+            const errorEl = document.getElementById('login-error');
+            
+            // Basic auth check
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${pwd}` }
+                });
+
+                if (res.ok) {
+                    adminToken = pwd;
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard-screen').style.display = 'block';
+                    loadDashboard();
+                    // Refresh data every 10 seconds
+                    refreshInterval = setInterval(loadDashboard, 10000);
+                } else {
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorEl.innerText = "Ошибка соединения.";
+                errorEl.style.display = 'block';
+            }
+        });
+
+        function logout() {
+            adminToken = '';
+            if (refreshInterval) clearInterval(refreshInterval);
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('admin-password').value = '';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        async function loadDashboard() {
+            if (!adminToken) return;
+
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401) logout();
+                    return;
+                }
+
+                const data = await res.json();
+                
+                // Update stats
+                document.getElementById('stat-users').innerText = data.totalUsers || 0;
+                document.getElementById('stat-pomodoros').innerText = data.totalPomodoros || 0;
+                document.getElementById('stat-rooms').innerText = data.activeRoomsCount || 0;
+                
+                const totalHours = ((data.totalFocusTime || 0) / 60).toFixed(1);
+                document.getElementById('stat-time').innerHTML = `${totalHours}<span style="font-size: 0.5em; color: var(--text-secondary); padding-left: 5px;">hrs</span>`;
+
+                // Update Users Table
+                renderUsers(data.users);
+
+                // Update Rooms Table
+                renderRooms(data.activeRooms);
+
+            } catch (err) {
+                console.error("Dashboard load failed:", err);
+            }
+        }
+
+        function renderUsers(users) {
+            const container = document.getElementById('users-table-container');
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No users found.</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Focus Time (hrs)</th>
+                            <th>Pomodoros</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            users.forEach(u => {
+                const hours = (u.total_focus_time / 60).toFixed(1);
+                const date = new Date(u.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                html += `
+                    <tr>
+                        <td style="font-weight: 500;">${u.username}</td>
+                        <td>${hours}</td>
+                        <td>${u.pomodoros_completed}</td>
+                        <td style="color: var(--text-secondary);">${date}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function renderRooms(rooms) {
+            const container = document.getElementById('rooms-table-container');
+            if (!rooms || rooms.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No active rooms right now.</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Room ID</th>
+                            <th>Members</th>
+                            <th>State</th>
+                            <th>Phase</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            rooms.forEach(r => {
+                const stateClass = r.timerState === 'running' ? 'running' : (r.timerState === 'paused' ? 'paused' : 'idle');
+                const phaseClass = r.phase === 'work' ? 'work' : 'break';
+                
+                html += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: 600;">${r.id}</td>
+                        <td>${r.memberCount} <span style="font-size: 0.8em; opacity:0.6">users</span></td>
+                        <td><span class="badge ${stateClass}">${r.timerState}</span></td>
+                        <td><span class="badge ${phaseClass}">${r.phase}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

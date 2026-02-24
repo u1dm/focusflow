@@ -77,9 +77,57 @@ app.get('/api/me', authenticateToken, async (req, res) => {
     }
 });
 
+// Admin panel auth middleware
+function authenticateAdmin(req, res, next) {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'Необходима авторизация' });
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err || user.username !== 'admin') {
+            return res.status(403).json({ error: 'Доступ запрещен' });
+        }
+        req.user = user;
+        next();
+    });
+}
+
+// Admin API
+app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
+    try {
+        const stats = await db.getTotalStats();
+        const users = await db.getAllUsers();
+
+        const activeRooms = Array.from(rooms.values()).map(r => ({
+            id: r.id,
+            timerState: r.timerState,
+            memberCount: r.members.size,
+            phase: r.phase,
+            createdAt: r.createdAt
+        }));
+
+        res.json({
+            success: true,
+            totalUsers: stats ? stats.totalUsers : 0,
+            totalFocusTime: stats ? stats.totalFocusTime : 0,
+            totalPomodoros: stats ? stats.totalPomodoros : 0,
+            activeRoomsCount: activeRooms.length,
+            activeRooms,
+            users
+        });
+    } catch (e) {
+        console.error('Admin API error:', e);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Serve Admin UI
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+});
+
 // SPA: serve index.html for all non-file routes (/:roomId, etc.)
 app.get('/:roomId', (req, res, next) => {
     if (req.params.roomId.includes('.')) return next();
+    if (req.params.roomId.toLowerCase() === 'admin') return next();
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
@@ -319,6 +367,21 @@ io.on('connection', (socket) => {
             message,
             timestamp: Date.now()
         });
+    });
+
+    // Admin kick member
+    socket.on('kick-member', (tgtSocketId) => {
+        if (!currentRoom) return;
+        const room = rooms.get(currentRoom);
+        if (!room) return;
+        const member = room.members.get(socket.id);
+        if (!member || (member.name !== 'admin' && member.userId !== 1)) return; // Only admin
+
+        const tgtMember = room.members.get(tgtSocketId);
+        if (tgtMember) {
+            io.to(tgtSocketId).emit('kicked');
+            console.log(`👢 Admin kicked ${tgtMember.name} from room ${currentRoom}`);
+        }
     });
 
     // ── Voice Chat (WebRTC Signaling) ──────────────────────────────────

@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcrypt');
 
-const dbPath = path.join(__dirname, '..', 'focusflow.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'focusflow.db');
 const db = new sqlite3.Database(dbPath);
 
 // Initialize database tables
@@ -16,7 +16,17 @@ db.serialize(() => {
             pomodoros_completed INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    `);
+    `, async (err) => {
+        if (!err) {
+            // Seed admin user
+            const admin = await dbAsync.get('SELECT * FROM users WHERE username = ?', ['admin']);
+            if (!admin) {
+                const hash = await bcrypt.hash('4254', 10);
+                await dbAsync.run('INSERT INTO users (username, password_hash) VALUES (?, ?)', ['admin', hash]);
+                console.log('✅ Admin user created (admin:4254)');
+            }
+        }
+    });
 });
 
 // Helper functions wrapper (Promises)
@@ -72,9 +82,19 @@ async function addFocusTime(userId, minutes) {
     );
 }
 
+async function getAllUsers() {
+    return await dbAsync.all('SELECT id, username, total_focus_time, pomodoros_completed, created_at FROM users ORDER BY created_at DESC');
+}
+
+async function getTotalStats() {
+    return await dbAsync.get('SELECT COUNT(*) as totalUsers, SUM(total_focus_time) as totalFocusTime, SUM(pomodoros_completed) as totalPomodoros FROM users');
+}
+
 module.exports = {
     createUser,
     verifyUser,
     getUserById,
-    addFocusTime
+    addFocusTime,
+    getAllUsers,
+    getTotalStats
 };

@@ -58,6 +58,7 @@ const authUsername = $('#auth-username');
 const authFocusTime = $('#auth-focus-time');
 const authPomodoros = $('#auth-pomodoros');
 const logoutBtn = $('#logout-btn');
+const adminPanelBtn = $('#admin-panel-btn');
 const authModal = $('#auth-modal');
 const showLoginBtn = $('#show-login-btn');
 const showRegisterBtn = $('#show-register-btn');
@@ -336,25 +337,40 @@ function updateSessionDots(completedSessions, total, phase) {
 
 function updateMembersList(members) {
     membersList.innerHTML = '';
+    const isAdminView = currentUser && currentUser.username === 'admin';
     members.forEach(m => {
         const li = document.createElement('li');
         li.className = 'member-item';
         const color = getAvatarColor(m.name);
 
-        let shareBtnHTML = '';
+        const mIsAdmin = m.userId === 1 || m.name === 'admin'; // We assume admin is username 'admin'
+
+        let buttonsHTML = '';
         if (currentRoom && currentRoom.screenSharer && currentRoom.screenSharer.socketId === m.socketId && m.socketId !== socket.id) {
-            shareBtnHTML = `<button class="btn-icon btn-tiny watch-stream-btn" style="margin-left: auto; color: var(--accent-green);" title="Смотреть трансляцию" onclick="requestScreenShare('${m.socketId}', '${escapeHtml(m.name)}')">
+            buttonsHTML += `<button class="btn-icon btn-tiny watch-stream-btn" style="margin-left: auto; color: var(--accent-green);" title="Смотреть трансляцию" onclick="requestScreenShare('${m.socketId}', '${escapeHtml(m.name)}')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>`;
         }
 
+        if (isAdminView && m.socketId !== socket.id) {
+            buttonsHTML += `<button class="btn-icon btn-tiny" style="margin-left: ${buttonsHTML ? '4px' : 'auto'}; color: var(--danger);" title="Выгнать" onclick="kickMember('${m.socketId}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+             </button>`;
+        }
+
         li.innerHTML = `
       <div class="member-avatar" style="background:${color}">${m.name[0].toUpperCase()}</div>
-      <span class="member-name">${escapeHtml(m.name)}</span>
-      ${shareBtnHTML}
+      <span class="member-name">${escapeHtml(m.name)} ${mIsAdmin ? '👑' : ''}</span>
+      ${buttonsHTML}
     `;
         membersList.appendChild(li);
     });
+}
+
+window.kickMember = function (tgtSocketId) {
+    if (confirm('Вы уверены, что хотите выгнать этого пользователя?')) {
+        socket.emit('kick-member', tgtSocketId);
+    }
 }
 
 window.requestScreenShare = function (sharerId, name) {
@@ -426,11 +442,32 @@ function updateAuthUI() {
         authPomodoros.textContent = currentUser.pomodoros_completed || 0;
         // Auto fill name if not set
         if (!userName.value) userName.value = currentUser.username;
+
+        // Admin features
+        if (currentUser.username === 'admin') {
+            if (adminPanelBtn) {
+                adminPanelBtn.classList.remove('hidden');
+                adminPanelBtn.style.display = 'inline-flex';
+            }
+        } else {
+            if (adminPanelBtn) {
+                adminPanelBtn.classList.add('hidden');
+                adminPanelBtn.style.display = 'none';
+            }
+        }
     } else {
         authLoggedOut.classList.remove('hidden');
         authLoggedIn.classList.add('hidden');
         authFocusTime.textContent = '0';
         authPomodoros.textContent = '0';
+        if (adminPanelBtn) {
+            adminPanelBtn.classList.add('hidden');
+            adminPanelBtn.style.display = 'none';
+        }
+    }
+    // Update members list to show admin controls if already in room
+    if (currentRoom && currentRoom.members) {
+        updateMembersList(currentRoom.members);
     }
 }
 
@@ -740,6 +777,11 @@ socket.on('settings-updated', (room) => {
     currentRoom = room;
     updateRoomUI(room);
     addChatMessage('', 'Настройки обновлены ⚙️', true);
+});
+
+socket.on('kicked', () => {
+    alert('Вы были выгнаны из комнаты администратором.');
+    leaveRoomBtn.click();
 });
 
 // ── Keyboard Shortcuts ───────────────────────────────────────────

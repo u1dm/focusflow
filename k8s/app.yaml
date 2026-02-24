@@ -17,11 +17,14 @@ spec:
         - name: focusflow
           image: mrforust/focusflow:latest
           imagePullPolicy: Always
+          env:
+            - name: DB_PATH
+              value: /opt/app/data/focusflow.db
           ports:
             - containerPort: 3000
           volumeMounts:
             - name: data-volume
-              mountPath: /app/data
+              mountPath: /opt/app/data
       volumes:
         - name: data-volume
           persistentVolumeClaim:
