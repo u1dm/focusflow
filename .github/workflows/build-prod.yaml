@@ -34,19 +34,19 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v3
-          
+
         - name: Setup Kubeconfig
           run: |
-            # Создаем папку в домашней директории пользователя, под которым бежит раннер
+            
             mkdir -p $HOME/.kube
-            # Записываем конфиг из секретов
+            
             echo "${{ secrets.KUBECONFIG_CONTENT }}" > $HOME/.kube/config
-            # Выставляем права, чтобы kubectl не ругался
+            
             chmod 600 $HOME/.kube/config
 
         - name: Update app
           run: |
-            # Явно указываем использовать именно этот файл
+            
             export KUBECONFIG=$HOME/.kube/config
-            # Выполняем команду
+            
             kubectl rollout restart deployment focusflow
